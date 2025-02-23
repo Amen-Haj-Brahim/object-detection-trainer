@@ -1,11 +1,11 @@
 from pycocotools.coco import COCO
 import os
 from PIL import Image
-from torch import as_tensor,float32,int64
+from torch import as_tensor,float32,int64,tensor
 from torch.utils.data import Dataset
 class CocoDataset(Dataset):
     def __init__(self, img_dir, transforms):
-        self.img_dir = img_dir
+        self.img_dir=img_dir
         self.coco = COCO("data/"+self.img_dir+"/_annotations.coco.json")
         self.transforms = transforms
         self.img_ids = list(self.coco.imgs.keys())
@@ -20,7 +20,7 @@ class CocoDataset(Dataset):
         
         # load image
         img_info = self.coco.imgs[img_id]
-        img_path = os.path.join(self.img_dir, img_info["file_name"])
+        img_path = os.path.join("data/"+self.img_dir, img_info["file_name"])
         image = Image.open(img_path).convert("RGB")
         
         # converting coco format (x,y,h,w) to (xmin, ymin, xmax, ymax) because that's what the model expects
@@ -41,4 +41,4 @@ class CocoDataset(Dataset):
         if self.transforms:
             image = self.transforms(image)
         
-        return image, {"boxes": boxes, "labels": labels, "image_id": img_id,"area":torch.tensor(areas),"iscrowd":torch.tensor(iscrowd)}
+        return image, {"boxes": boxes, "labels": labels, "image_id": img_id,"area":tensor(areas),"iscrowd":tensor(iscrowd)}

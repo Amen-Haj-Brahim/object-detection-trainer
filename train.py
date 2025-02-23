@@ -1,31 +1,36 @@
 import torch
 import dataloaders.ms_coco_dataloader
 from helper.engine import train_one_epoch, evaluate
-from models.faster_rcnn_resnet50_fpn import fasterrcnn_resnet50_fpn
+from models.faster_rcnn_resnet50_fpn import FasterRCNN_resnet50_fpn
 import argparse
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 import dataloaders
-def train(model,train_set, valid_set,epochs,lr,print_freq):  
-  device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-  model.to(device)
-  # trainable params are only the unfrozen ones
-  params = [p for p in model.parameters() if p.requires_grad]
-  optimizer = torch.optim.SGD(params, lr=lr, momentum=0.9, weight_decay=0.0005)
-  # lr scheduler to try decaying lr
-  lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3,gamma=0.1)
-  # set to train mode
-  model.train()
-  # using helper functions from the torch vision github repo, thanks torchvision !
-  for epoch in range(epochs):
-    # training for one epoch
-    train_one_epoch(model, optimizer, train_set, device, epoch, print_freq=print_freq)
-    # update lr
-    lr_scheduler.step()
-    # eval on valid_set
-    evaluate(model, valid_set, device=device)
+import utils.utils
+import lightning as L
+from lightning.pytorch.callbacks import EarlyStopping, ModelCheckpoint
+from lightning.pytorch.loggers import TensorBoardLogger
+
+# def train(model,train_set, valid_set,epochs,lr,print_freq):  
+#   device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+#   model.to(device)
+#   # trainable params are only the unfrozen ones
+#   params = [p for p in model.parameters() if p.requires_grad]
+#   optimizer = torch.optim.SGD(params, lr=lr, momentum=0.9, weight_decay=0.0005)
+#   # lr scheduler to try decaying lr
+#   lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3,gamma=0.1)
+#   # set to train mode
+#   model.train()
+#   # using helper functions from the torch vision github repo, thanks torchvision !
+#   for epoch in range(epochs):
+#     # training for one epoch
+#     train_one_epoch(model, optimizer, train_set, device, epoch, print_freq=print_freq)
+#     # update lr
+#     lr_scheduler.step()
+#     # eval on valid_set
+#     evaluate(model, valid_set, device=device)
   
-  torch.save(model.state_dict(), "logs/my_model.pt")
+#   torch.save(model.state_dict(), "logs/my_model.pt")
 
 
 
@@ -52,14 +57,42 @@ if __name__ == "__main__":
       transforms.ToTensor(),
       ])
   
-  train_dataset = dataloaders.ms_coco_dataloader('train',transform=transform)
-  valid_dataset= dataloaders.ms_coco_dataloader('valid',transform=transform)
-  test_dataset = dataloaders.ms_coco_dataloader('test',transform=transform)
+  train_dataset = dataloaders.ms_coco_dataloader.CocoDataset('train', transforms=transform)
+  valid_dataset = dataloaders.ms_coco_dataloader.CocoDataset('valid', transforms=transform)
+  test_dataset = dataloaders.ms_coco_dataloader.CocoDataset('test', transforms=transform)
 
-  train_loader = DataLoader(train_dataset,args.train_batch_size)
-  test_loader = DataLoader(test_dataset,args.test_valid_batch_size)
-  test_loader = DataLoader(test_dataset,args.test__valid_batch_size)
+  train_loader = DataLoader(train_dataset,args.train_batch_size,collate_fn=lambda x: tuple(zip(*x)))
+  test_loader = DataLoader(test_dataset,args.test_valid_batch_size,collate_fn=lambda x: tuple(zip(*x)))
+  valid_loader = DataLoader(valid_dataset,args.test_valid_batch_size,collate_fn=lambda x: tuple(zip(*x)))
+  
+  classes=utils.utils.get_categories()
 
-  model= fasterrcnn_resnet50_fpn(pretrained=True)
+  model=FasterRCNN_resnet50_fpn(utils.utils.get_categories(),args.lr)
+  
+  callbacks=[
+    EarlyStopping(
+        'val_loss',
+        patience=3
+    ),
+    ModelCheckpoint(
+        monitor='val_loss',
+        dirpath='./',
+        filename='models-{epoch:02d}-{valid_loss:.2f}',
+        save_top_k=3,
+        mode='min'
+  )]
+  
+  trainer = L.Trainer(
+        max_epochs=args.epochs,
+        log_every_n_steps=args.print_freq,                 
+        accelerator='cuda',
+        logger=TensorBoardLogger(save_dir="logs/"),
+        callbacks=callbacks,
+  )
+  
+  
+  trainer.fit(model, train_loader,valid_loader,)
+  
+  # torch.save( model.state_dict(), "logs/my_model.pt")
 
-  train(model,train_loader,test_loader,args.epochs,args.lr,args.print_freq)
+  # train(model,train_loader,test_loader,args.epochs,args.lr,args.print_freq)
