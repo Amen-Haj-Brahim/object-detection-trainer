@@ -4,9 +4,9 @@ from PIL import Image
 from torch import as_tensor,float32,int64
 from torch.utils.data import Dataset
 class CocoDataset(Dataset):
-    def __init__(self, json_path, img_dir, transforms):
-        self.coco = COCO(json_path)
+    def __init__(self, img_dir, transforms):
         self.img_dir = img_dir
+        self.coco = COCO("data/"+self.img_dir+"/_annotations.coco.json")
         self.transforms = transforms
         self.img_ids = list(self.coco.imgs.keys())
     

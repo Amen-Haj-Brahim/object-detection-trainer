@@ -25,7 +25,10 @@ def train(model,train_set, valid_set,epochs,lr,print_freq):
     # eval on valid_set
     evaluate(model, valid_set, device=device)
   
-  torch.save(model.state_dict(), "mnist_cnn.pt")
+  torch.save(model.state_dict(), "logs/my_model.pt")
+
+
+
 if __name__ == "__main__":
   #------------------------------argument parser--------------------------------#
   parser = argparse.ArgumentParser(description='Object Detection Trainer')
@@ -34,9 +37,9 @@ if __name__ == "__main__":
   
   # parser.add_argument('--data-format', type=str,help='your data format (for now only coco is implemented)')
 
-  parser.add_argument('--train-batch-size', type=int, default=8,help='train batch size: 8')
+  parser.add_argument('--train-batch-size', type=int, default=4,help='train batch size: 4')
   
-  parser.add_argument('--test-valid-batch-size', type=int, default=8,help='test and valid batch size: 16')
+  parser.add_argument('--test-valid-batch-size', type=int, default=8,help='test and valid batch size: 8')
   
   parser.add_argument('--lr', type=float, default=0.0001,help='learning rate: 0.0001')
   
@@ -49,9 +52,9 @@ if __name__ == "__main__":
       transforms.ToTensor(),
       ])
   
-  train_dataset = dataloaders.ms_coco_dataloader('data/train/',transform=transform)
-  valid_dataset= dataloaders.ms_coco_dataloader('data/valid/',transform=transform)
-  test_dataset = dataloaders.ms_coco_dataloader('data/test/',transform=transform)
+  train_dataset = dataloaders.ms_coco_dataloader('train',transform=transform)
+  valid_dataset= dataloaders.ms_coco_dataloader('valid',transform=transform)
+  test_dataset = dataloaders.ms_coco_dataloader('test',transform=transform)
 
   train_loader = DataLoader(train_dataset,args.train_batch_size)
   test_loader = DataLoader(test_dataset,args.test_valid_batch_size)
