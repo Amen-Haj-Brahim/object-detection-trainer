@@ -9,11 +9,11 @@ from helper.coco_eval import CocoEvaluator
 from helper.coco_utils import get_coco_api_from_dataset
 
 
-def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, scaler=None):
+def train_one_epoch(model, optimizer, data_loader, device, epoch,epochs, print_freq, scaler=None):
     model.train()
     metric_logger = utils.MetricLogger(delimiter="  ")
     metric_logger.add_meter("lr", utils.SmoothedValue(window_size=1, fmt="{value:.6f}"))
-    header = f"Epoch: [{epoch}]"
+    header = f"Epoch: [{epoch}/{epochs}]"
 
     lr_scheduler = None
     if epoch == 0:
@@ -27,7 +27,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch, print_freq, sc
     for images, targets in metric_logger.log_every(data_loader, print_freq, header):
         images = list(image.to(device) for image in images)
         targets = [{k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in t.items()} for t in targets]
-        with torch.cuda.amp.autocast(enabled=scaler is not None):
+        with torch.amp.autocast('cuda',enabled=scaler is not None):
             loss_dict = model(images, targets)
             losses = sum(loss for loss in loss_dict.values())
 
@@ -73,7 +73,7 @@ def _get_iou_types(model):
 
 
 @torch.inference_mode()
-def evaluate(model, data_loader, device):
+def evaluate(model, data_loader, device,print_freq):
     n_threads = torch.get_num_threads()
     # FIXME remove this and make paste_masks_in_image run on the GPU
     torch.set_num_threads(1)
@@ -86,7 +86,7 @@ def evaluate(model, data_loader, device):
     iou_types = _get_iou_types(model)
     coco_evaluator = CocoEvaluator(coco, iou_types)
 
-    for images, targets in metric_logger.log_every(data_loader, 100, header):
+    for images, targets in metric_logger.log_every(data_loader, print_freq, header):
         images = list(img.to(device) for img in images)
 
         if torch.cuda.is_available():

@@ -7,7 +7,7 @@ import torch
 from torchvision.datasets import CocoDetection
 from torchvision import transforms
 from torch.utils.data import DataLoader
-
+# from dataloaders.ms_coco_dataloader import CocoDataset
 
 def train(model,train_loader, valid_loader,epochs,lr,print_freq):  
 
@@ -28,43 +28,10 @@ def train(model,train_loader, valid_loader,epochs,lr,print_freq):
   for epoch in range(epochs):
     
     # training for one epoch
-    train_one_epoch(model, optimizer, train_loader, device, epoch, print_freq=print_freq)
+    train_one_epoch(model, optimizer, train_loader, device, epoch,epochs, print_freq=print_freq)
     
     # update lr
     lr_scheduler.step()
     
     # eval on valid_set
-    evaluate(model, valid_loader, device=device)
-    
-
-if __name__ == "__main__":
-  
-  from models.faster_rcnn_resnet50_fpn import fasterrcnn_resnet50_fpn
-  from helper.engine import train_one_epoch, evaluate
-  import utils.utils
-  
-  with open("config.yaml") as f:
-      config=yaml.safe_load(f)
-      print(config)
-
-  # this is assuming your data is augmented so i will only apply ToTensor()
-  transform=transforms.Compose([transforms.ToTensor()])
-  
-  # load datasets  
-  train_dataset = CocoDetection(root="data/train/", annFile="data/train/_annotations.coco.json", transform=transform)
-  valid_dataset = CocoDetection(root="data/valid/", annFile="data/valid/_annotations.coco.json", transform=transform)
-  test_dataset = CocoDetection(root="data/test/", annFile="data/test/_annotations.coco.json", transform=transform)
-
-  train_loader = DataLoader(train_dataset,config["train_batch_size"],collate_fn=lambda x: tuple(zip(*x)))
-  test_loader = DataLoader(test_dataset,config["test_valid_batch_size"],collate_fn=lambda x: tuple(zip(*x)))
-  valid_loader = DataLoader(valid_dataset,config["test_valid_batch_size"],collate_fn=lambda x: tuple(zip(*x)))
-  
-  classes=utils.utils.get_categories()
-
-  model=fasterrcnn_resnet50_fpn(utils.utils.get_categories())
-  
-  # run trainer
-  train(model,train_loader,valid_loader,config["epochs"],config["lr"],config["print_freq"])
-  
-  # save model with timestamp when training loop ends
-  torch.save(model.state_dict(), "../models/"+str(round(time.time()))+".pt")
+    evaluate(model, valid_loader, device=device,print_freq=print_freq)

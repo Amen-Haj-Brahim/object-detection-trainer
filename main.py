@@ -5,9 +5,9 @@ from src.models import faster_rcnn_resnet50_fpn
 from src.trainer import train
 from src.tester import test
 from src.utils import utils
+from src.dataloaders.ms_coco_dataloader import CocoDataset
 
 import torch
-from torchvision.datasets import CocoDetection
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
@@ -21,9 +21,9 @@ def main():
     # load datasets
     transform=transforms.Compose([transforms.ToTensor()])
     
-    train_dataset = CocoDetection(root="data/train/", annFile="data/train/_annotations.coco.json", transform=transform)
-    valid_dataset = CocoDetection(root="data/valid/", annFile="data/valid/_annotations.coco.json", transform=transform)
-    test_dataset = CocoDetection(root="data/test/", annFile="data/test/_annotations.coco.json", transform=transform)
+    train_dataset = CocoDataset(img_dir="train", transforms=transform)
+    valid_dataset = CocoDataset(img_dir="valid", transforms=transform)
+    test_dataset = CocoDataset(img_dir="test", transforms=transform)
 
     train_loader = DataLoader(train_dataset,config["train_batch_size"],collate_fn=lambda x: tuple(zip(*x)))
     test_loader = DataLoader(test_dataset,config["test_batch_size"],collate_fn=lambda x: tuple(zip(*x)))
@@ -34,13 +34,14 @@ def main():
     model=faster_rcnn_resnet50_fpn.fasterrcnn_resnet50_fpn(classes)
 
     # run trainer
-    train(model,train_loader,valid_loader,config["lr"],config["print_freq"])
+    train(model,train_loader,valid_loader,config["epochs"],config["lr"],config["print_freq"])
     
     # save model with timestamp when training loop ends
-    torch.save(model.state_dict(), "/models/"+str(round(time.time()))+".pt")
+    model_name=str(round(time.time()))
+    torch.save(model.state_dict(), "models/"+model_name+".pt")
     
     # run tester on all batches of the test dataset
-    # test(model,test_loader)
+    test(model,model_name,test_loader)
     
 if __name__ == "__main__":
     main()
