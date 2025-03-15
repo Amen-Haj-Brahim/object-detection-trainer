@@ -1,6 +1,6 @@
 # Object detection trainer
 
-### a simple pipeline to finetune object detection models
+### finetune object detection models on your own data
 
 More models and dataset formats will be added in the future but for now these are available
 
