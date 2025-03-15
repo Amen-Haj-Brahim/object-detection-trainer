@@ -90,3 +90,35 @@ def test(model,model_name,test_loader,test_dir):
   print("--------> done testing check /tests/"+model_name+" <--------")
   
   
+  
+
+if __name__=="__main__":
+    from torch.utils.data import DataLoader
+    from torchvision import transforms
+    from utils.utils import get_categories
+    from models.faster_rcnn_resnet50_fpn import fasterrcnn_resnet50_fpn
+    from dataloaders.ms_coco_dataloader import CocoDataset
+    transform=transforms.Compose([
+      transforms.ToTensor(),
+      ])
+    
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('--model-name', type=str, default="",help='model file name')
+    
+    args = parser.parse_args()
+
+    if args.model_name=="":
+        print("you forgot to pass the model name do it as follows : python tester.py --model-name your_model_name")
+        exit()
+    
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model=fasterrcnn_resnet50_fpn(get_categories("../data/train/_annotations.coco.json"))
+
+    model.load_state_dict(torch.load("../models/"+args.model_name+".pt"))
+    model.to(device)
+
+    test_dataset = CocoDataset('../data/test', transforms=transform)
+    test_loader = DataLoader(test_dataset,4,shuffle=True,collate_fn=lambda x: tuple(zip(*x)))
+    
+    test(model,args.model_name,test_loader,"../tests/")
