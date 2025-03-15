@@ -26,8 +26,8 @@ def main():
     test_dataset = CocoDetection(root="data/test/", annFile="data/test/_annotations.coco.json", transform=transform)
 
     train_loader = DataLoader(train_dataset,config["train_batch_size"],collate_fn=lambda x: tuple(zip(*x)))
-    test_loader = DataLoader(test_dataset,config["test_valid_batch_size"],collate_fn=lambda x: tuple(zip(*x)))
-    valid_loader = DataLoader(valid_dataset,config["test_valid_batch_size"],collate_fn=lambda x: tuple(zip(*x)))
+    test_loader = DataLoader(test_dataset,config["test_batch_size"],collate_fn=lambda x: tuple(zip(*x)))
+    valid_loader = DataLoader(valid_dataset,config["valid_batch_size"],collate_fn=lambda x: tuple(zip(*x)))
     
     classes=utils.get_categories()
     
