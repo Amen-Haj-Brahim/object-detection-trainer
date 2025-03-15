@@ -21,15 +21,15 @@ def main():
     # load datasets
     transform=transforms.Compose([transforms.ToTensor()])
     
-    train_dataset = CocoDataset(img_dir="train", transforms=transform)
-    valid_dataset = CocoDataset(img_dir="valid", transforms=transform)
-    test_dataset = CocoDataset(img_dir="test", transforms=transform)
+    train_dataset = CocoDataset(img_dir="data/train/", transforms=transform)
+    valid_dataset = CocoDataset(img_dir="data/valid/", transforms=transform)
+    test_dataset = CocoDataset(img_dir="data/test/", transforms=transform)
 
     train_loader = DataLoader(train_dataset,config["train_batch_size"],collate_fn=lambda x: tuple(zip(*x)))
     test_loader = DataLoader(test_dataset,config["test_batch_size"],collate_fn=lambda x: tuple(zip(*x)))
     valid_loader = DataLoader(valid_dataset,config["valid_batch_size"],collate_fn=lambda x: tuple(zip(*x)))
     
-    classes=utils.get_categories()
+    classes=utils.get_categories("data/train/_annotations.coco.json")
     
     model=faster_rcnn_resnet50_fpn.fasterrcnn_resnet50_fpn(classes)
 
@@ -41,7 +41,7 @@ def main():
     torch.save(model.state_dict(), "models/"+model_name+".pt")
     
     # run tester on all batches of the test dataset
-    test(model,model_name,test_loader)
+    test(model,model_name,test_loader,"data/test","data/train/_annotations.coco.json")
     
 if __name__ == "__main__":
     main()

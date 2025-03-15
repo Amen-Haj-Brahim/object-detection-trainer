@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from torchvision.ops import nms
 import cv2 as cv
 import argparse
-from utils.utils import get_categories
+from src.utils.utils import get_categories
 def draw_boxes(image, boxes, labels, confs,classes):
   
     for i, box in enumerate(boxes):
@@ -22,14 +22,14 @@ def draw_boxes(image, boxes, labels, confs,classes):
     return image
 
 
-def test(model,model_name,test_loader,test_dir):
+def test(model,model_name,test_loader,test_dir,annot_dir):
   
   if not os.path.exists(test_dir+model_name):
     os.makedirs(test_dir+model_name,exist_ok=True)
   
   model.eval()
   c=1
-  classes=get_categories("../data/train/_annotations.coco.json")
+  classes=get_categories(annot_dir)
 
   # loop through batches
   for i, (images, targets) in enumerate(test_loader):    
@@ -98,6 +98,8 @@ if __name__=="__main__":
     from utils.utils import get_categories
     from models.faster_rcnn_resnet50_fpn import fasterrcnn_resnet50_fpn
     from dataloaders.ms_coco_dataloader import CocoDataset
+    from utils.utils import get_categories
+    
     transform=transforms.Compose([
       transforms.ToTensor(),
       ])
@@ -121,4 +123,4 @@ if __name__=="__main__":
     test_dataset = CocoDataset('../data/test', transforms=transform)
     test_loader = DataLoader(test_dataset,4,shuffle=True,collate_fn=lambda x: tuple(zip(*x)))
     
-    test(model,args.model_name,test_loader,"../tests/")
+    test(model,args.model_name,test_loader,"../tests/","../data/train/_annotations.coco.json")
