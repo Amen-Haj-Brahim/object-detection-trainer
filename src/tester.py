@@ -1,26 +1,15 @@
 import os
-import time
-import torch
-import matplotlib.pyplot as plt
-from torchvision.ops import nms
-import cv2 as cv
 import argparse
-from src.utils.utils import get_categories
-def draw_boxes(image, boxes, labels, confs,classes):
-  
-    for i, box in enumerate(boxes):
-        # casting to int because for some reason it wouldn't work otherwise
-        x1, y1, x2, y2 = map(int, box)
-         # draw bbox
-        cv.rectangle(image, (x1, y1), (x2, y2), (0,255,0), 2)
-        # write class and confidence score
-        label = classes[labels[i]]
-        if confs is not None:
-            label += str(round(confs[i],2))
-        cv.putText(image,label,(x1, y1-5),cv.FONT_HERSHEY_SIMPLEX,0.5,(0,255,0),2)
-    
-    return image
 
+import torch
+from torchvision.ops import nms
+
+import matplotlib.pyplot as plt
+
+try:
+  from src.utils.utils import get_categories,draw_boxes
+except:
+  pass
 
 def test(model,model_name,test_loader,test_dir,annot_dir):
   
@@ -43,11 +32,11 @@ def test(model,model_name,test_loader,test_dir,annot_dir):
     # loop through samples in the batch
     for j, image in enumerate(images):
       
-        print("batch : "+str(i)+"img: "+str(c)+"/"+str(len(test_loader.dataset)))
+        print("batch: "+str(i)+" img: "+str(c)+"/"+str(len(test_loader.dataset)))
       
         # pillow loads the images in (c,h,w) format so i gotta transpose it to (h,w,c)
         image = image.cpu().numpy().transpose(1, 2, 0)  
-        image = (image * 255).astype("uint8") 
+        image = (image * 255).astype("uint8")
 
         # get bboxes and labels
         real_bboxes = targets[j]["boxes"].cpu().numpy()
@@ -69,7 +58,7 @@ def test(model,model_name,test_loader,test_dir,annot_dir):
         real_img = draw_boxes(image.copy(), real_bboxes, real_labels,None,classes)
         pred_img = draw_boxes(image.copy(), pred_bboxes, pred_labels, pred_conf,classes)
 
-        plt.figure(figsize=(10,10))
+        plt.figure(figsize=(20,15))
 
         # plot preds and real
         plt.subplot(1, 2, 1)
@@ -82,7 +71,8 @@ def test(model,model_name,test_loader,test_dir,annot_dir):
         plt.title("predictions")
         plt.axis("off")
 
-
+        plt.tight_layout()
+        
         plt.savefig(test_dir+model_name+"/test_"+str(i)+"_"+str(j)+".png")
         plt.close()
         c+=1
@@ -95,14 +85,11 @@ def test(model,model_name,test_loader,test_dir,annot_dir):
 if __name__=="__main__":
     from torch.utils.data import DataLoader
     from torchvision import transforms
-    from utils.utils import get_categories
+    from utils.utils import get_categories,draw_boxes
     from models.faster_rcnn_resnet50_fpn import fasterrcnn_resnet50_fpn
     from dataloaders.ms_coco_dataloader import CocoDataset
-    from utils.utils import get_categories
     
-    transform=transforms.Compose([
-      transforms.ToTensor(),
-      ])
+    transform=transforms.Compose([transforms.ToTensor()])
     
     parser = argparse.ArgumentParser()
 
