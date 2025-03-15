@@ -6,9 +6,10 @@ from torch.utils.data import Dataset
 class CocoDataset(Dataset):
     def __init__(self, img_dir, transforms):
         self.img_dir=img_dir
-        self.coco = COCO("data/"+self.img_dir+"/_annotations.coco.json")
+        self.coco = COCO("../data/"+self.img_dir+"/_annotations.coco.json")
         self.transforms = transforms
         self.img_ids = list(self.coco.imgs.keys())
+
     
     def __len__(self):
         return len(self.img_ids)
@@ -17,11 +18,11 @@ class CocoDataset(Dataset):
         img_id = self.img_ids[idx]
         ann_ids = self.coco.getAnnIds(imgIds=img_id)
         annotations = self.coco.loadAnns(ann_ids)
-        
         # load image
         img_info = self.coco.imgs[img_id]
-        img_path = os.path.join("data/"+self.img_dir, img_info["file_name"])
-        image = Image.open(img_path).convert("RGB")
+        img_path = str("dataset/"+self.dir+"/"+img_info["file_name"])
+        print(img_path+"--------------------------------------------------------")
+        image = Image.open(str("qsdqs"+img_path)).convert("RGB")
         
         # converting coco format (x,y,h,w) to (xmin, ymin, xmax, ymax) because that's what the model expects
         boxes = []
