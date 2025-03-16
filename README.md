@@ -48,9 +48,9 @@ cd ..
 pip install -r requirements.txt
 ```
 
-- you can use the default hyper parameters or open config.yaml and change them
-
 ### Running the scripts
+
+- you can use the default hyper parameters or open config.yaml and change them
 
 - To train, log metrics, and test a model
 
