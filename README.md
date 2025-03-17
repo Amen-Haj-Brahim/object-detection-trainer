@@ -62,7 +62,7 @@ python main.py
 
 ```
 cd src
-python tester.py --model-name your_model_name_here
+python tester.py --model-name=your_model_name_here
 # model names are timestamps which will be a number that looks like 1742073877
 ```
 
